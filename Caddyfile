@@ -1,0 +1,42 @@
+# Caddyfile for stairs project
+# Place this file in the same directory as docker-compose.yml
+
+# Domain configuration
+yourdomain.com {
+    # Static files / frontend (serve from frontend build or Vercel)
+    reverse_proxy /api/* backend:8080
+    reverse_proxy /api/cms/* strapi:1337
+    
+    # All other routes - serve frontend
+    # Option 1: If running frontend as separate container:
+    reverse_proxy frontend:3000
+    
+    # Option 2: If using Vercel:
+    # handle / {
+    #     reverse_proxy vercel.app
+    # }
+
+    # Enable automatic HTTPS
+    tls {
+        issuer acme {
+            email admin@yourdomain.com
+        }
+    }
+
+    # Gzip compression for better performance
+    encode gzip
+
+    # Security headers
+    header X-Frame-Options "SAMEORIGIN"
+    header X-Content-Type-Options "nosniff"
+    header X-XSS-Protection "1; mode=block"
+}
+
+# Development configuration (localhost)
+localhost {
+    reverse_proxy /api/* backend:8080
+    reverse_proxy /api/cms/* strapi:1337
+    reverse_proxy frontend:3000
+    
+    encode gzip
+}

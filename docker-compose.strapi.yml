@@ -1,0 +1,52 @@
+services:
+  strapi:
+    image: strapi-dev
+    build:
+      context: ./strapi-app
+      dockerfile: Dockerfile
+    entrypoint: []
+    command: ["/bin/sh", "/srv/app/entrypoint.sh", "strapi", "develop", "--watch-admin"]
+    ports:
+      - "1337:1337"
+    environment:
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres-strapi
+      DATABASE_PORT: 5432
+      DATABASE_NAME: strapi
+      DATABASE_USERNAME: stairs
+      DATABASE_PASSWORD: secret
+      JWT_SECRET: strapi-jwt-secret-key-change-in-production
+      ADMIN_JWT_SECRET: strapi-admin-jwt-secret-key-change-in-production
+      NODE_ENV: development
+    volumes:
+      - strapi_data:/srv/app
+    depends_on:
+      postgres-strapi:
+        condition: service_healthy
+    networks:
+      - strapi-network
+
+  postgres-strapi:
+    image: postgres:16-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: strapi
+      POSTGRES_USER: stairs
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - postgres_strapi_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stairs"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - strapi-network
+
+networks:
+  strapi-network:
+
+volumes:
+  strapi_data:
+  postgres_strapi_data:
