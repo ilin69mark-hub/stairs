@@ -8,23 +8,17 @@ import { Button } from "@/components/ui/button";
 function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const orderNumber = searchParams.get("orderNumber") || "ORD-0000";
+  const orderNumber = searchParams.get("orderNumber");
   
   const [minutesLeft, setMinutesLeft] = useState(15);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setMinutesLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
+    if (minutesLeft <= 0) return;
+    const timer = setTimeout(() => {
+      setMinutesLeft((prev) => prev - 1);
     }, 60000);
-
-    return () => clearInterval(timer);
-  }, []);
+    return () => clearTimeout(timer);
+  }, [minutesLeft]);
 
   return (
     <motion.div
@@ -71,14 +65,16 @@ function SuccessContent() {
         >
           Номер заказа:
         </motion.p>
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="text-2xl font-bold text-blue-600 mb-6"
-        >
-          {orderNumber}
-        </motion.p>
+        {orderNumber && (
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="text-2xl font-bold text-blue-600 mb-6"
+          >
+            {orderNumber}
+          </motion.p>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -89,7 +85,7 @@ function SuccessContent() {
           <p className="text-blue-800">
             Менеджер свяжется с вами в течение{" "}
             <span className="font-bold text-xl">{minutesLeft}</span>{" "}
-            {minutesLeft === 1 ? "минуты" : minutesLeft < 5 ? "минут" : "минут"}
+            {minutesLeft === 1 ? "минуту" : minutesLeft >= 2 && minutesLeft <= 4 ? "минуты" : "минут"}
           </p>
         </motion.div>
 

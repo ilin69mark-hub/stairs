@@ -3,10 +3,10 @@ import type {
   StairConfig,
   CalculationResult,
   StepPosition,
-  StairType,
   Material,
   Railing,
   Coating,
+  StairTypeInfo,
   CatalogResponse,
   OrderRequest,
   OrderResponse,
@@ -33,7 +33,7 @@ describe('Types', () => {
 
     it('should allow optional fields', () => {
       const config: StairConfig = {
-        type: 'L-shaped',
+        type: 'l-shaped',
         floorHeight: 3000,
         openingWidth: 1000,
         openingLength: 3000,
@@ -77,9 +77,9 @@ describe('Types', () => {
     })
   })
 
-  describe('StairType', () => {
+  describe('StairTypeInfo', () => {
     it('should have correct shape', () => {
-      const stairType: StairType = {
+      const stairType: StairTypeInfo = {
         id: '1',
         slug: 'straight',
         name: 'Прямая',
@@ -92,7 +92,7 @@ describe('Types', () => {
     })
 
     it('should allow optional imageUrl', () => {
-      const stairType: StairType = {
+      const stairType: StairTypeInfo = {
         id: '1',
         slug: 'straight',
         name: 'Прямая',

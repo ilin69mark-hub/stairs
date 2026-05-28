@@ -29,6 +29,13 @@ export interface StairConfig {
   material: string;
   railing?: string;
   coating?: string;
+  stringerMaterial?: string;
+  stringerThickness?: number;
+  stepThickness?: number;
+  totalSteps?: number;
+  lowerSteps?: number;
+  overhang?: number;
+  direction?: 'left' | 'right';
 }
 
 export interface StairTypeInfo {
@@ -115,12 +122,14 @@ class ApiError extends Error {
 
 async function fetchApi<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  signal?: AbortSignal
 ): Promise<T> {
   const url = `${API_URL}${endpoint}`;
 
   const response = await fetch(url, {
     ...options,
+    signal,
     headers: {
       "Content-Type": "application/json",
       ...options.headers,
@@ -136,12 +145,13 @@ async function fetchApi<T>(
 }
 
 export async function calculateStair(
-  config: StairConfig
+  config: StairConfig,
+  signal?: AbortSignal
 ): Promise<CalculationResult> {
   return fetchApi<CalculationResult>("/api/v1/calculate", {
     method: "POST",
     body: JSON.stringify(config),
-  });
+  }, signal);
 }
 
 export async function getCatalog(): Promise<CatalogResponse> {

@@ -1,19 +1,20 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
 import { useCartStore } from "@/stores/cart";
+import { createOrder } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const checkoutSchema = z.object({
   name: z.string().min(2, "Имя должно быть не менее 2 символов"),
-  phone: z.string().min(10, "Введите корректный номер телефона"),
+  phone: z.string().regex(/^\+?\d[\d\s\-()]{7,20}$/, "Введите корректный номер телефона"),
   email: z.string().email("Введите корректный email").optional().or(z.literal("")),
   address: z.string().optional(),
   comment: z.string().optional(),
@@ -24,6 +25,7 @@ type CheckoutFormData = z.infer<typeof checkoutSchema>;
 export default function CheckoutPage() {
   const router = useRouter();
   const { currentConfig, calculatedResult, clearCart } = useCartStore();
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
@@ -44,9 +46,27 @@ export default function CheckoutPage() {
   }
 
   const onSubmit = async (data: CheckoutFormData) => {
-    console.log("Submitting order:", { ...data, config: currentConfig, result: calculatedResult });
-    clearCart();
-    router.push("/");
+    setSubmitError(null);
+    try {
+      const digits = data.phone.replace(/\D/g, "");
+      const phoneWithPrefix = data.phone.startsWith("+7")
+        ? data.phone
+        : `+7${digits.replace(/^8?/, "").slice(-10)}`;
+
+      const result = await createOrder({
+        customerName: data.name,
+        customerPhone: phoneWithPrefix,
+        customerEmail: data.email || undefined,
+        customerAddress: data.address || undefined,
+        comment: data.comment || undefined,
+        stairConfig: currentConfig as unknown as Record<string, unknown>,
+      });
+
+      clearCart();
+      router.push(`/checkout/success?orderNumber=${result.orderNumber}`);
+    } catch {
+      setSubmitError("Не удалось оформить заказ. Попробуйте позже.");
+    }
   };
 
   const materialNames: Record<string, string> = {
@@ -136,6 +156,12 @@ export default function CheckoutPage() {
                     placeholder="Дополнительные пожелания..."
                   />
                 </div>
+
+                {submitError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                    {submitError}
+                  </div>
+                )}
 
                 <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                   {isSubmitting ? "Отправка..." : "Подтвердить заказ"}

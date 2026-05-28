@@ -69,11 +69,11 @@ DATABASE_PORT=$DATABASE_PORT
 DATABASE_NAME=$DATABASE_NAME
 DATABASE_USERNAME=$DATABASE_USERNAME
 DATABASE_PASSWORD=$DATABASE_PASSWORD
-JWT_SECRET=strapi-jwt-secret-key-change-in-production
-ADMIN_JWT_SECRET=strapi-admin-jwt-secret-key-change-in-production
-APP_KEYS=toBeModified1,toBeModified2
-API_TOKEN_SALT=toBeModified
-TRANSFER_TOKEN_SALT=toBeModified
+JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET:-change-me-in-production}
+APP_KEYS=${APP_KEYS:-change-me-key1,change-me-key2}
+API_TOKEN_SALT=${API_TOKEN_SALT:-change-me}
+TRANSFER_TOKEN_SALT=${TRANSFER_TOKEN_SALT:-change-me}
 EOF
 
     mkdir -p config public/uploads src

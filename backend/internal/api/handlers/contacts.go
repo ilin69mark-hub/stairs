@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -22,10 +23,10 @@ func NewContactsHandler(pool *pgxpool.Pool, asynqClient *asynq.Client) *Contacts
 }
 
 type ContactRequest struct {
-	Name    string  `json:"name"`
-	Phone   string  `json:"phone"`
+	Name    string  `json:"name" validate:"required,max=100"`
+	Phone   string  `json:"phone" validate:"required,max=20"`
 	Email   *string `json:"email"`
-	Message *string `json:"message"`
+	Message *string `json:"message" validate:"omitempty,max=2000"`
 }
 
 func (h *ContactsHandler) SubmitContact(w http.ResponseWriter, r *http.Request) {
@@ -41,6 +42,11 @@ func (h *ContactsHandler) SubmitContact(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if len(req.Name) > 100 || len(req.Phone) > 20 {
+		http.Error(w, "name or phone too long", http.StatusBadRequest)
+		return
+	}
+
 	contactID := uuid.New()
 
 	_, err := h.pool.Exec(r.Context(), `
@@ -49,17 +55,29 @@ func (h *ContactsHandler) SubmitContact(w http.ResponseWriter, r *http.Request) 
 	`, contactID, req.Name, req.Phone, req.Email, req.Message)
 
 	if err != nil {
+		log.Printf("failed to save contact: %v", err)
 		http.Error(w, "failed to save contact", http.StatusInternalServerError)
 		return
 	}
 
-	task, _ := json.Marshal(map[string]string{
+	email := ""
+	if req.Email != nil {
+		email = *req.Email
+	}
+
+	task, err := json.Marshal(map[string]string{
 		"contactId": contactID.String(),
 		"name":      req.Name,
 		"phone":     req.Phone,
-		"email":     *req.Email,
+		"email":     email,
 	})
-	h.asynq.Enqueue(asynq.NewTask("send_contact_notification", task), asynq.MaxRetry(3))
+	if err != nil {
+		log.Printf("failed to marshal contact task: %v", err)
+	} else {
+		if _, err := h.asynq.Enqueue(asynq.NewTask("send_contact_notification", task), asynq.MaxRetry(3)); err != nil {
+			log.Printf("failed to enqueue contact notification: %v", err)
+		}
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)

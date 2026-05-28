@@ -14,13 +14,19 @@ export function StringerMesh({ steps, stepWidth, side }: StringerMeshProps) {
   const geometry = useMemo(() => {
     if (steps.length === 0) return null;
 
-    const sideMultiplier = side === "left" ? -0.5 : 0.5;
+    const sideSign = side === "right" ? 1 : -1;
     const points: THREE.Vector3[] = [];
 
     for (const step of steps) {
-      const x = step.x * 0.001 + stepWidth * 0.001 * sideMultiplier;
+      const baseX = step.x * 0.001;
+      const baseZ = step.z * 0.001;
       const y = step.y * 0.001;
-      const z = step.z * 0.001;
+
+      const halfWidth = stepWidth * 0.001 * 0.5 * sideSign;
+
+      const x = baseX + halfWidth * Math.cos(step.rotationY);
+      const z = baseZ + halfWidth * Math.sin(step.rotationY);
+
       points.push(new THREE.Vector3(x, y, z));
     }
 

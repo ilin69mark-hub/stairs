@@ -1,4 +1,4 @@
-.PHONY: up up-dev up-prod up-strapi down down-all ps logs logs-be logs-st logs-db
+.PHONY: up up-dev up-prod up-strapi down down-all ps logs logs-be logs-st logs-db dev-all
 
 up: ## Start all dev services (postgres, redis, minio)
 	docker compose up -d
@@ -42,6 +42,14 @@ restart: down up ## Restart dev services
 clean: ## Remove all containers and volumes
 	docker compose down -v
 	docker compose -f docker-compose.strapi.yml down -v
+
+dev-all: up-all ## Start all services for local dev (docker + backend + frontend)
+	@echo "Starting backend, geometry watcher, and frontend..."; \
+	trap 'kill 0' EXIT; \
+	(cd backend && go run ./cmd/server) & \
+	(cd packages/stair-geometry && npm run build && npm run dev) & \
+	(cd frontend && npm run dev) & \
+	wait
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'

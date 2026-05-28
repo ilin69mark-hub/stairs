@@ -1,56 +1,37 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useConfiguratorStore } from "@/stores/configurator";
 import { useCartStore, CalculationResult as CartCalculationResult } from "@/stores/cart";
 import { calculateStair } from "@/lib/api";
-import type { StairGeometry, Step, StairInput as StairInputBase } from '@/types';
-import type { StairType } from "@/stores/configurator";
+import { calculateGeometry } from "@stairs/geometry";
+import type { Step, StairInput } from "@stairs/geometry";
 
 export function useStairConfigurator() {
-  const {
-    type,
-    floorHeight,
-    openingWidth,
-    openingLength,
-    stepWidth,
-    material,
-    railing,
-    coating,
-    setType,
-    setFloorHeight,
-    setOpeningWidth,
-    setOpeningLength,
-    setStepWidth,
-    setMaterial,
-    setRailing,
-    setCoating,
-  } = useConfiguratorStore();
+  const store = useConfiguratorStore();
+  const { type, floorHeight, openingWidth, openingLength, stepWidth, material, railing, coating, stringerMaterial, stringerThickness, stepThickness, totalSteps, lowerSteps, overhang, direction, setType, setFloorHeight, setOpeningWidth, setOpeningLength, setStepWidth, setMaterial, setRailing, setCoating, setStringerMaterial, setStringerThickness, setStepThickness, setTotalSteps, setLowerSteps, setOverhang, setDirection } = store;
 
   const { calculatedResult, setResult } = useCartStore();
-
-  const [geometry, setGeometry] = useState<Step[]>([]);
-  const isLoadingRef = useRef(false);
-  const workerRef = useRef<Worker | null>(null);
-  const workerDebounceRef = useRef<NodeJS.Timeout | null>(null);
-  const priceDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const geometry = useMemo<Step[]>(() => {
+    const input: StairInput = { type: type as StairInput['type'], floorHeight, openingWidth, openingLength, stepWidth, totalSteps, lowerSteps, overhang, direction };
+    return calculateGeometry(input).steps;
+  }, [type, floorHeight, openingWidth, openingLength, stepWidth, totalSteps, lowerSteps, overhang, direction]);
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   const fetchPrice = useCallback(async (config: Parameters<typeof calculateStair>[0]) => {
-    if (isLoadingRef.current) return;
-    isLoadingRef.current = true;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setIsLoadingPrice(true);
     try {
-      const result = await calculateStair(config);
+      const result = await calculateStair(config, controller.signal);
       const cartResult: CartCalculationResult = {
         steps: result.steps.map(s => ({
-          index: s.index,
-          x: 0,
-          y: s.position[1],
-          z: s.position[2],
-          rotationY: 0,
-          isWinder: s.isWinder,
-          treadDepth: s.treadDepth,
-          riseHeight: s.riseHeight,
-          width: 0,
+          index: s.index, x: 0, y: s.position[1], z: s.position[2],
+          rotationY: 0, isWinder: s.isWinder, treadDepth: s.treadDepth,
+          riseHeight: s.riseHeight, width: 0,
         })),
         totalSteps: result.totalSteps,
         totalRise: result.steps.reduce((sum, s) => sum + s.riseHeight, 0),
@@ -65,108 +46,19 @@ export function useStairConfigurator() {
       };
       setResult(cartResult);
     } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
       console.error("Failed to calculate price:", error);
     } finally {
-      isLoadingRef.current = false;
+      setIsLoadingPrice(false);
     }
   }, [setResult]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && !workerRef.current) {
-      workerRef.current = new Worker(
-        new URL("../workers/geometry.worker.ts", import.meta.url)
-      );
+    fetchPrice({ type, floorHeight, openingWidth, openingLength, stepWidth, material, railing, coating, stringerMaterial, stringerThickness, stepThickness, totalSteps, lowerSteps, overhang, direction });
+  }, [type, floorHeight, openingWidth, openingLength, stepWidth, material, railing, coating, stringerMaterial, stringerThickness, stepThickness, totalSteps, lowerSteps, overhang, direction, fetchPrice]);
 
-      workerRef.current.onmessage = (event: MessageEvent<{success: boolean, data?: StairGeometry, error?: string}>) => {
-        if (event.data.success && event.data.data) {
-          setGeometry(event.data.data.steps);
-        }
-      };
-    }
+  const config = { type, floorHeight, openingWidth, openingLength, stepWidth, material, railing, coating, stringerMaterial, stringerThickness, stepThickness, totalSteps, lowerSteps, overhang, direction };
+  const updateConfig = { setType, setFloorHeight, setOpeningWidth, setOpeningLength, setStepWidth, setMaterial, setRailing, setCoating, setStringerMaterial, setStringerThickness, setStepThickness, setTotalSteps, setLowerSteps, setOverhang, setDirection };
 
-    return () => {
-      workerRef.current?.terminate();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (workerDebounceRef.current) {
-      clearTimeout(workerDebounceRef.current);
-    }
-
-    workerDebounceRef.current = setTimeout(() => {
-      if (workerRef.current) {
-        const input: StairInputBase = {
-          type: type as StairInputBase['type'],
-          floorHeight,
-          openingWidth,
-          openingLength,
-          stepWidth,
-        };
-        workerRef.current.postMessage(input);
-      }
-    }, 100);
-
-    return () => {
-      if (workerDebounceRef.current) {
-        clearTimeout(workerDebounceRef.current);
-      }
-    };
-  }, [type, floorHeight, openingWidth, openingLength, stepWidth, material, railing, coating]);
-
-  useEffect(() => {
-    if (priceDebounceRef.current) {
-      clearTimeout(priceDebounceRef.current);
-    }
-
-    priceDebounceRef.current = setTimeout(() => {
-      fetchPrice({
-        type,
-        floorHeight,
-        openingWidth,
-        openingLength,
-        stepWidth,
-        material,
-        railing,
-        coating,
-      });
-    }, 300);
-
-    return () => {
-      if (priceDebounceRef.current) {
-        clearTimeout(priceDebounceRef.current);
-      }
-    };
-  }, [type, floorHeight, openingWidth, openingLength, stepWidth, material, railing, coating, fetchPrice]);
-
-  const config = {
-    type,
-    floorHeight,
-    openingWidth,
-    openingLength,
-    stepWidth,
-    material,
-    railing,
-    coating,
-  };
-
-  const updateConfig = {
-    setType,
-    setFloorHeight,
-    setOpeningWidth,
-    setOpeningLength,
-    setStepWidth,
-    setMaterial,
-    setRailing,
-    setCoating,
-  };
-
-  return {
-    config,
-    updateConfig,
-    geometry,
-    price: calculatedResult?.totalPrice,
-    calculatedResult,
-    isLoading: false,
-  };
+  return { config, updateConfig, geometry, price: calculatedResult?.totalPrice, calculatedResult, isLoading: isLoadingPrice };
 }

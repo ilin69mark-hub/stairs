@@ -104,8 +104,8 @@ func TestGeometrySyncWithFrontend(t *testing.T) {
 					winderCount++
 				}
 			}
-			if winderCount != 3 {
-				t.Errorf("expected 3 winder steps, got %d", winderCount)
+			if winderCount != 5 {
+				t.Errorf("expected 5 winder steps, got %d", winderCount)
 			}
 
 			// Verify indices are sequential 0..N-1
@@ -185,8 +185,8 @@ func TestSpiralGeometry(t *testing.T) {
 		openingWidth float64
 		wantSteps    int
 	}{
-		{"Spiral 2800mm, 1500 opening", 2800, 1500, 15},
-		{"Spiral 2400mm, 1400 opening", 2400, 1400, 13},
+		{"Spiral 2800mm, 1500 opening", 2800, 1500, 16},
+		{"Spiral 2400mm, 1400 opening", 2400, 1400, 14},
 	}
 
 	for _, tc := range testCases {
@@ -311,10 +311,10 @@ func TestLShapedLowerMarchAlongZ(t *testing.T) {
 		}
 	}
 
-	// Lower march should have x=0
+	// Lower march should have x = stepWidth/2 (wall-aligned)
 	for i := 0; i < firstWinderIndex; i++ {
-		if math.Abs(steps[i].Position[0]) > 0.01 {
-			t.Errorf("step %d in lower march: x should be 0, got %.4f", i, steps[i].Position[0])
+		if math.Abs(steps[i].Position[0]-450) > 0.01 {
+			t.Errorf("step %d in lower march: x should be 450, got %.4f", i, steps[i].Position[0])
 		}
 	}
 }
@@ -337,13 +337,13 @@ func TestLShapedUpperMarchAlongX(t *testing.T) {
 		}
 	}
 
-	// Upper march should have constant z
+	// Upper march should have constant z among themselves
 	if lastWinderIndex >= 0 && lastWinderIndex < len(steps)-1 {
-		constantZ := steps[lastWinderIndex].Position[2]
-		for i := lastWinderIndex + 1; i < len(steps); i++ {
-			if math.Abs(steps[i].Position[2]-constantZ) > 20 {
+		upperZ := steps[lastWinderIndex+1].Position[2]
+		for i := lastWinderIndex + 2; i < len(steps); i++ {
+			if math.Abs(steps[i].Position[2]-upperZ) > 1 {
 				t.Errorf("step %d in upper march: z should be constant (%.1f), got %.1f",
-					i, constantZ, steps[i].Position[2])
+					i, upperZ, steps[i].Position[2])
 			}
 		}
 	}
@@ -368,7 +368,7 @@ func TestWinderStepsHaveRotation(t *testing.T) {
 		}
 	}
 
-	if winders != 3 {
-		t.Errorf("expected 3 winder steps, got %d", winders)
+	if winders != 5 {
+		t.Errorf("expected 5 winder steps, got %d", winders)
 	}
 }

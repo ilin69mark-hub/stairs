@@ -26,21 +26,8 @@ type Deps struct {
 func NewRouter(deps *Deps) chi.Router {
 	r := chi.NewRouter()
 
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.Method == "OPTIONS" {
-				w.Header().Set("Access-Control-Allow-Origin", "*")
-				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-				w.WriteHeader(http.StatusOK)
-				return
-			}
-			next.ServeHTTP(w, r)
-		})
-	})
-
 	calcService := calculator.NewCalculationService()
-	calcHandler := handlers.NewCalculatorHandler(calcService, deps.Redis)
+	calcHandler := handlers.NewCalculatorHandler(calcService)
 	catalogHandler := handlers.NewCatalogHandler(deps.Pool)
 	ordersHandler := handlers.NewOrdersHandler(deps.Pool, deps.Asynq)
 	contactsHandler := handlers.NewContactsHandler(deps.Pool, deps.Asynq)
@@ -50,40 +37,40 @@ func NewRouter(deps *Deps) chi.Router {
 		corsOrigin = deps.Config.CorsOrigin
 	}
 
-	r.Group(func(r chi.Router) {
-		r.Route("/api/v1", func(r chi.Router) {
-			r.Group(func(r chi.Router) {
-				r.Use(corsMiddleware(corsOrigin))
-				r.With(func(next http.Handler) http.Handler {
-					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						if r.Method == "OPTIONS" {
-							w.Header().Set("Access-Control-Allow-Origin", corsOrigin)
-							w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-							w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-							w.WriteHeader(http.StatusOK)
-							return
-						}
-						next.ServeHTTP(w, r)
-					})
-				}).Post("/calculate", calcHandler.CalculatePrecise)
-				r.Get("/catalog", catalogHandler.GetCatalog)
-				r.Post("/orders", ordersHandler.CreateOrder)
-				r.Post("/contacts", contactsHandler.SubmitContact)
-			})
-		})
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Use(corsMiddleware(corsOrigin))
+		r.Post("/calculate", calcHandler.CalculatePrecise)
+		r.Get("/catalog", catalogHandler.GetCatalog)
+		r.Post("/orders", ordersHandler.CreateOrder)
+		r.Post("/contacts", contactsHandler.SubmitContact)
 	})
 
 	r.Route("/api/cms", func(r chi.Router) {
+		if deps.Config != nil && deps.Config.StrapiProxyToken != "" {
+			r.Use(strapiAuthMiddleware(deps.Config.StrapiProxyToken))
+		}
 		proxy := &httputil.ReverseProxy{
 			Director: func(req *http.Request) {
 				req.URL.Scheme = "http"
-				req.URL.Host = "strapi:1337"
+				req.URL.Host = deps.Config.StrapiHost
 			},
 		}
 		r.Handle("/*", proxy)
 	})
 
 	return r
+}
+
+func strapiAuthMiddleware(token string) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Header.Get("X-Strapi-Token") != token {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 func corsMiddleware(origin string) func(next http.Handler) http.Handler {

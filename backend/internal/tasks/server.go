@@ -6,13 +6,16 @@ import (
 	"log"
 
 	"github.com/hibiken/asynq"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/minio/minio-go/v7"
 )
 
 type Server struct {
-	server *asynq.Server
+	server      *asynq.Server
+	pdfGen      *PDFGenerator
 }
 
-func NewAsynqServer(redisAddr string) *Server {
+func NewAsynqServer(redisAddr string, pool *pgxpool.Pool, minioClient *minio.Client, minioPublicURL string) *Server {
 	server := asynq.NewServer(
 		asynq.RedisClientOpt{Addr: redisAddr},
 		asynq.Config{
@@ -20,7 +23,10 @@ func NewAsynqServer(redisAddr string) *Server {
 		},
 	)
 
-	s := &Server{server: server}
+	s := &Server{
+		server: server,
+		pdfGen: NewPDFGenerator(pool, minioClient, minioPublicURL),
+	}
 
 	mux := asynq.NewServeMux()
 	mux.HandleFunc("generate_pdf", s.handleGeneratePDF)
@@ -41,8 +47,11 @@ func (s *Server) handleGeneratePDF(ctx context.Context, task *asynq.Task) error 
 		return err
 	}
 
-	log.Printf("generating pdf for order: %s", payload["orderId"])
+	if s.pdfGen != nil {
+		return s.pdfGen.HandleGeneratePDF(ctx, payload)
+	}
 
+	log.Printf("pdf generator not available, skipping pdf for order: %s", payload["orderId"])
 	return nil
 }
 

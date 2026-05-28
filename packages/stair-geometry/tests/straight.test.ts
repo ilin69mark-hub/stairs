@@ -37,13 +37,13 @@ describe('calculateStraight', () => {
   });
 
   test('all isWinder are false', () => {
-    result.steps.forEach(step => {
+    result.steps.forEach((step) => {
       expect(step.isWinder).toBe(false);
     });
   });
 
   test('all x equal 0', () => {
-    result.steps.forEach(step => {
+    result.steps.forEach((step) => {
       expect(step.x).toBe(0);
     });
   });

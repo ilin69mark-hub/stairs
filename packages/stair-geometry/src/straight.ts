@@ -1,8 +1,13 @@
 import { StairInput, StairGeometry, Step } from './types';
-import { calculateStepsCount, calculateTreadDepth, calculateInclination, validateSnip } from './utils';
+import { calculateStepsCount, calculateTreadDepth, calculateInclination, validateSnip, validateInput } from './utils';
 
+/**
+ * Calculates geometry for a straight (single-flight) staircase.
+ */
 export function calculateStraight(input: StairInput): StairGeometry {
-  const totalSteps = calculateStepsCount(input.floorHeight);
+  validateInput(input);
+
+  const totalSteps = input.totalSteps ?? calculateStepsCount(input.floorHeight);
   const rise = input.floorHeight / totalSteps;
   const tread = calculateTreadDepth(rise);
   const totalRun = tread * (totalSteps - 1);

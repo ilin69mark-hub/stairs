@@ -84,7 +84,7 @@ func CalculateRailingCost(ctx context.Context, railingSlug string, length float6
 	if price, ok := defaultRailingPrices[railingSlug]; ok {
 		pricePerMeter = price
 	}
-	return pricePerMeter * length, nil
+	return pricePerMeter * (length / 1000.0), nil
 }
 
 func CalculateCoatingCost(ctx context.Context, coatingSlug string, area float64) (float64, error) {
@@ -109,7 +109,7 @@ func EstimateRailingLength(steps []models.StepPosition) float64 {
 		totalLength += segmentLength
 	}
 
-	return totalLength * 2
+	return totalLength
 }
 
 func EstimateCoatingArea(steps []models.StepPosition) float64 {

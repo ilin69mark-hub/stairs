@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { useCartStore } from '@/stores/cart'
-import type { StairConfig, CalculationResult } from '@/types'
+import { useCartStore, type StairInput, type CalculationResult } from '@/stores/cart'
 
 describe('useCartStore', () => {
   beforeEach(() => {
@@ -14,7 +13,7 @@ describe('useCartStore', () => {
   })
 
   it('should set config', () => {
-    const config: StairConfig = {
+    const config: StairInput = {
       type: 'straight',
       floorHeight: 2800,
       openingWidth: 900,
@@ -26,7 +25,6 @@ describe('useCartStore', () => {
     }
 
     useCartStore.getState().setConfig(config)
-
     expect(useCartStore.getState().currentConfig).toEqual(config)
   })
 
@@ -34,8 +32,10 @@ describe('useCartStore', () => {
     const result: CalculationResult = {
       steps: [],
       totalSteps: 15,
+      totalRise: 2800,
       inclination: 35,
       isValid: true,
+      warnings: [],
       materialCost: 50000,
       workCost: 30000,
       railingCost: 10000,
@@ -44,25 +44,28 @@ describe('useCartStore', () => {
     }
 
     useCartStore.getState().setResult(result)
-
     expect(useCartStore.getState().calculatedResult).toEqual(result)
   })
 
   it('should clear cart', () => {
-    const config: StairConfig = {
+    const config: StairInput = {
       type: 'straight',
       floorHeight: 2800,
       openingWidth: 900,
       openingLength: 3500,
       stepWidth: 900,
       material: 'oak',
+      railing: 'wood',
+      coating: 'varnish',
     }
 
     const result: CalculationResult = {
       steps: [],
       totalSteps: 15,
+      totalRise: 2800,
       inclination: 35,
       isValid: true,
+      warnings: [],
       materialCost: 50000,
       workCost: 30000,
       railingCost: 10000,

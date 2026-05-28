@@ -14,16 +14,18 @@ import (
 )
 
 type PDFGenerator struct {
-	pool   *pgxpool.Pool
-	minio  *minio.Client
-	bucket string
+	pool     *pgxpool.Pool
+	minio    *minio.Client
+	bucket   string
+	publicURL string
 }
 
-func NewPDFGenerator(pool *pgxpool.Pool, minioClient *minio.Client) *PDFGenerator {
+func NewPDFGenerator(pool *pgxpool.Pool, minioClient *minio.Client, publicURL string) *PDFGenerator {
 	return &PDFGenerator{
-		pool:   pool,
-		minio:  minioClient,
-		bucket: "stairs",
+		pool:      pool,
+		minio:     minioClient,
+		bucket:    "stairs",
+		publicURL: publicURL,
 	}
 }
 
@@ -97,7 +99,7 @@ func (g *PDFGenerator) HandleGeneratePDF(ctx context.Context, payload map[string
 		return fmt.Errorf("failed to upload PDF: %w", err)
 	}
 
-	pdfURL := fmt.Sprintf("http://localhost:9000/stairs/%s", objectName)
+	pdfURL := fmt.Sprintf("%s/stairs/%s", g.publicURL, objectName)
 
 	_, err = g.pool.Exec(ctx, "UPDATE orders SET pdf_estimate_url = $1, updated_at = NOW() WHERE id = $2", pdfURL, orderID)
 	if err != nil {

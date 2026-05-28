@@ -6,6 +6,10 @@ export interface StairInput {
   openingWidth: number;
   openingLength: number;
   stepWidth: number;
+  totalSteps?: number;
+  lowerSteps?: number;
+  overhang?: number;
+  direction?: 'left' | 'right';
 }
 
 export interface Step {
@@ -18,6 +22,11 @@ export interface Step {
   treadDepth: number;
   riseHeight: number;
   width: number;
+  segment?: number;
+  winderInnerDist?: number;
+  winderOuterDist?: number;
+  winderCount?: number;
+  winderTotalAngle?: number;
 }
 
 export interface StairGeometry {

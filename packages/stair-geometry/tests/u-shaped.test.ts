@@ -14,21 +14,21 @@ describe('calculateUShaped', () => {
   const result = calculateUShaped(input);
 
   test('exactly 6 winder steps (2 turns of 3)', () => {
-    const winderCount = result.steps.filter(s => s.isWinder).length;
+    const winderCount = result.steps.filter((s) => s.isWinder).length;
     expect(winderCount).toBe(SNIP.WINDER_COUNT_U * 2);
   });
 
   test('has three straight segments', () => {
-    const winderSteps = result.steps.filter(s => s.isWinder);
-    const winderIndices = winderSteps.map(s => s.index).sort((a, b) => a - b);
-    
+    const winderSteps = result.steps.filter((s) => s.isWinder);
+    const winderIndices = winderSteps.map((s) => s.index).sort((a, b) => a - b);
+
     const firstWinderEnd = winderIndices[SNIP.WINDER_COUNT_U - 1];
     const secondWinderEnd = winderIndices[winderIndices.length - 1];
-    
+
     const firstSegmentLength = firstWinderEnd;
     const middleSegmentLength = secondWinderEnd - winderIndices[SNIP.WINDER_COUNT_U];
     const lastSegmentLength = result.totalSteps - 1 - secondWinderEnd;
-    
+
     expect(firstSegmentLength).toBeGreaterThan(0);
     expect(middleSegmentLength).toBeGreaterThan(0);
     expect(lastSegmentLength).toBeGreaterThan(0);
@@ -54,7 +54,7 @@ describe('calculateUShaped', () => {
     let winderCount = 0;
     let middleStart = -1;
     let middleEnd = -1;
-    
+
     for (let i = 0; i < result.steps.length; i++) {
       if (result.steps[i].isWinder) {
         winderCount++;
@@ -66,10 +66,10 @@ describe('calculateUShaped', () => {
         }
       }
     }
-    
+
     if (middleStart !== -1 && middleEnd !== -1 && middleStart <= middleEnd) {
       const middleSteps = result.steps.slice(middleStart, middleEnd + 1);
-      const piRotations = middleSteps.filter(s => Math.abs(s.rotationY) > 2);
+      const piRotations = middleSteps.filter((s) => Math.abs(s.rotationY) > 2);
       expect(piRotations.length).toBeGreaterThan(0);
     }
   });

@@ -1,8 +1,10 @@
 -- +goose Up
+CREATE SEQUENCE IF NOT EXISTS orders_sequence;
+
 CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_number VARCHAR(20) UNIQUE NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'new',
+    status VARCHAR(20) NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'processing', 'completed', 'cancelled')),
     customer_name VARCHAR(100) NOT NULL,
     customer_phone VARCHAR(20) NOT NULL,
     customer_email VARCHAR(100),

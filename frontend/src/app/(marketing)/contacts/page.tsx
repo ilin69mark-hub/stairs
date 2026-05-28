@@ -36,7 +36,7 @@ export default function ContactsPage() {
       setIsSubmitted(true);
       reset();
       setTimeout(() => setIsSubmitted(false), 5000);
-    } catch (err) {
+    } catch {
       setError("Не удалось отправить заявку. Попробуйте позже.");
     }
   };

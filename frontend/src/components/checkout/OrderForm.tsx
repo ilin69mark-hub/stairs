@@ -11,12 +11,13 @@ import { Label } from "@/components/ui/label";
 import { useCartStore } from "@/stores/cart";
 import { useRouter } from "next/navigation";
 
+const phoneRegex = /^(\+7|8)?[\d\s\-()]{7,20}$/;
+
 const orderSchema = z.object({
   name: z.string().min(2, "Имя должно быть не менее 2 символов"),
   phone: z
     .string()
-    .regex(/^\+7\d{10}$/, "Формат: +7XXXXXXXXXX")
-    .or(z.string().min(11, "Введите 11 цифр номера")),
+    .regex(phoneRegex, "Введите корректный номер телефона"),
   email: z.string().email("Введите корректный email").optional().or(z.literal("")),
   address: z.string().optional(),
   comment: z.string().optional(),
@@ -45,10 +46,10 @@ export function OrderForm() {
     setError(null);
 
     try {
-      const formattedPhone = data.phone.replace(/\D/g, "");
-      const phoneWithPrefix = formattedPhone.startsWith("7") 
-        ? `+7${formattedPhone}` 
-        : `+7${formattedPhone.slice(-10)}`;
+      const digits = data.phone.replace(/\D/g, "");
+      const phoneWithPrefix = data.phone.startsWith("+7")
+        ? data.phone
+        : `+7${digits.replace(/^8?/, "").slice(-10)}`;
 
       await createOrder({
         customerName: data.name,
@@ -60,8 +61,8 @@ export function OrderForm() {
       });
 
       clearCart();
-      router.push("/?order=success");
-    } catch (err) {
+      router.push("/checkout/success");
+    } catch {
       setError("Не удалось оформить заказ. Попробуйте позже.");
     } finally {
       setIsSubmitting(false);

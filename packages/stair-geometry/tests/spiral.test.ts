@@ -13,7 +13,7 @@ describe('calculateSpiral', () => {
 
     const result = calculateSpiral(input);
 
-    result.steps.forEach(step => {
+    result.steps.forEach((step) => {
       expect(step.isWinder).toBe(true);
     });
   });
@@ -30,7 +30,7 @@ describe('calculateSpiral', () => {
     const result = calculateSpiral(input);
     const expectedRadius = input.openingWidth / 2 - 100;
 
-    result.steps.forEach(step => {
+    result.steps.forEach((step) => {
       const distance = Math.sqrt(step.x * step.x + step.z * step.z);
       expect(distance).toBeCloseTo(expectedRadius, 0);
     });
@@ -78,7 +78,7 @@ describe('calculateSpiral', () => {
     }
 
     const firstDiff = angleDiffs[0];
-    angleDiffs.forEach(diff => {
+    angleDiffs.forEach((diff) => {
       expect(diff).toBeCloseTo(firstDiff, 1);
     });
   });
@@ -95,7 +95,7 @@ describe('calculateSpiral', () => {
     const result = calculateSpiral(input);
     const expectedRadius = 1500 / 2 - 100;
 
-    result.steps.forEach(step => {
+    result.steps.forEach((step) => {
       const distance = Math.sqrt(step.x * step.x + step.z * step.z);
       expect(distance).toBeCloseTo(expectedRadius, 0);
     });

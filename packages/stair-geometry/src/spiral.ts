@@ -1,27 +1,34 @@
 import { StairInput, StairGeometry, Step } from './types';
-import { calculateTreadDepth } from './utils';
+import {
+  calculateStepsCount,
+  calculateInclination,
+  validateSnip,
+  validateInput,
+  validateStepsConsistency,
+  SNIP,
+} from './utils';
 
-const IDEAL_SPIRAL_RISE = 190;
-const MIN_STEPS = 5;
-const MIN_RADIUS = 200;
-const RADIUS_OFFSET = 100;
-
+/**
+ * Calculates geometry for a spiral (helical) staircase.
+ */
 export function calculateSpiral(input: StairInput): StairGeometry {
-  const totalSteps = Math.max(MIN_STEPS, Math.round(input.floorHeight / IDEAL_SPIRAL_RISE));
+  validateInput(input);
+
+  const totalSteps = input.totalSteps ?? Math.max(SNIP.SPIRAL_MIN_STEPS, calculateStepsCount(input.floorHeight));
   const rise = input.floorHeight / totalSteps;
-  
-  const radius = Math.max(MIN_RADIUS, input.openingWidth / 2 - RADIUS_OFFSET);
-  
-  const totalAngle = 2 * Math.PI + (totalSteps / 10) * Math.PI;
+
+  const radius = Math.max(SNIP.SPIRAL_MIN_RADIUS, input.openingWidth / 2 - SNIP.SPIRAL_RADIUS_OFFSET);
+
+  const totalAngle = SNIP.SPIRAL_TOTAL_ANGLE_BASE + totalSteps * SNIP.SPIRAL_TOTAL_ANGLE_EXTRA;
   const anglePerStep = totalAngle / totalSteps;
-  
-  const tread = radius * anglePerStep * 0.8;
+
+  const tread = radius * anglePerStep;
 
   const steps: Step[] = [];
 
   for (let i = 0; i < totalSteps; i++) {
     const angle = i * anglePerStep;
-    
+
     steps.push({
       index: i,
       x: radius * Math.cos(angle),
@@ -32,32 +39,27 @@ export function calculateSpiral(input: StairInput): StairGeometry {
       treadDepth: tread,
       riseHeight: rise,
       width: input.stepWidth,
+      winderCount: totalSteps,
+      winderTotalAngle: totalAngle,
     });
   }
 
-  const lastStep = steps[steps.length - 1];
-  const warnings: string[] = [];
+  const run = radius * totalAngle;
+  const inclination = calculateInclination(input.floorHeight, run);
 
-  for (let i = 1; i < steps.length; i++) {
-    if (steps[i].index !== steps[i - 1].index + 1) {
-      warnings.push(`Step indices not sequential at position ${i}`);
-    }
-  }
+  const validation = validateSnip(rise, tread, inclination, steps.length);
+  const stepsValidation = validateStepsConsistency(steps, input.floorHeight);
 
-  if (Math.abs(lastStep.y - input.floorHeight) > 1) {
-    warnings.push(`Last step y (${lastStep.y.toFixed(1)}) does not match floor height (${input.floorHeight})`);
-  }
-
-  if (radius < MIN_RADIUS + 50) {
-    warnings.push(`Spiral radius ${radius.toFixed(0)}mm is relatively small`);
+  if (radius < SNIP.SPIRAL_MIN_RADIUS + 50) {
+    stepsValidation.warnings.push(`Spiral radius ${radius.toFixed(0)}mm is relatively small`);
   }
 
   return {
     steps,
     totalSteps: steps.length,
     totalRise: input.floorHeight,
-    inclination: 0,
-    isValid: warnings.length === 0,
-    warnings,
+    inclination,
+    isValid: validation.isValid && stepsValidation.isValid,
+    warnings: [...validation.warnings, ...stepsValidation.warnings],
   };
 }

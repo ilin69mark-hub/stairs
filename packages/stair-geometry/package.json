@@ -3,15 +3,33 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "test": "jest",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "lint": "eslint src tests --ext .ts",
+    "lint:fix": "eslint src tests --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "sync": "rm -rf ../../frontend/node_modules/@stairs/geometry && mkdir -p ../../frontend/node_modules/@stairs && cp -r . ../../frontend/node_modules/@stairs/geometry && rm -rf ../../frontend/node_modules/@stairs/geometry/node_modules",
+    "build:sync": "npm run build && npm run sync"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.4",
+    "@typescript-eslint/parser": "^8.59.4",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
     "jest": "^29.7.0",
+    "prettier": "^3.8.3",
     "ts-jest": "^29.1.2",
     "typescript": "^5.3.3"
   }

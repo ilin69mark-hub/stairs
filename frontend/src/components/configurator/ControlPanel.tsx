@@ -3,14 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useStairConfigurator } from "@/hooks/useStairConfigurator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import type { StairType } from "@/stores/configurator";
 
 export function ControlPanel() {
   const router = useRouter();
-  const { config, updateConfig, geometry, price, isLoading, calculatedResult } = useStairConfigurator();
+  const { config, updateConfig, price, isLoading, calculatedResult } = useStairConfigurator();
 
   const stairTypes = [
     { id: "straight", name: "Прямая", icon: "↗️" },
@@ -57,10 +56,23 @@ export function ControlPanel() {
               <Label className="text-sm text-gray-600 mb-1 block">Высота этажа (мм)</Label>
               <input
                 type="number"
-                defaultValue={config?.floorHeight || 2800}
-                onBlur={(e) => {
+                value={config?.floorHeight || 2800}
+                onChange={(e) => {
                   const val = Number(e.target.value);
                   if (val > 0) updateConfig.setFloorHeight(val);
+                }}
+                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-lg font-medium focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm text-gray-600 mb-1 block">Длина проёма (мм)</Label>
+              <input
+                type="number"
+                value={config?.openingLength || 3500}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  if (val > 0) updateConfig.setOpeningLength(val);
                 }}
                 className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-lg font-medium focus:border-blue-500 focus:outline-none"
               />
@@ -70,10 +82,101 @@ export function ControlPanel() {
               <Label className="text-sm text-gray-600 mb-1 block">Ширина проёма (мм)</Label>
               <input
                 type="number"
-                defaultValue={config?.openingWidth || 900}
-                onBlur={(e) => {
+                value={config?.openingWidth || 900}
+                onChange={(e) => {
                   const val = Number(e.target.value);
                   if (val > 0) updateConfig.setOpeningWidth(val);
+                }}
+                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-lg font-medium focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm text-gray-600 mb-1 block">Ширина марша (мм)</Label>
+              <input
+                type="number"
+                value={config?.stepWidth || 900}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  if (val > 0) updateConfig.setStepWidth(val);
+                }}
+                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-lg font-medium focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm text-gray-600 mb-1 block">Кол-во ступеней (пусто = авто)</Label>
+              <input
+                type="number"
+                value={config?.totalSteps ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value === '' ? undefined : Number(e.target.value);
+                  if (val === undefined || val >= 0) updateConfig.setTotalSteps(val);
+                }}
+                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-lg font-medium focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm text-gray-600 mb-1 block">Ступеней нижнего марша (пусто = авто)</Label>
+              <input
+                type="number"
+                value={config?.lowerSteps ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value === '' ? undefined : Number(e.target.value);
+                  if (val === undefined || val >= 0) updateConfig.setLowerSteps(val);
+                }}
+                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-lg font-medium focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm text-gray-600 mb-1 block">Свес ступени (мм)</Label>
+              <input
+                type="number"
+                value={config?.overhang ?? 20}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  if (val >= 0) updateConfig.setOverhang(val);
+                }}
+                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-lg font-medium focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm text-gray-600 mb-1 block">Направление поворота</Label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => updateConfig.setDirection('left')}
+                  className={`flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                    config?.direction === 'left'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  Левый
+                </button>
+                <button
+                  onClick={() => updateConfig.setDirection('right')}
+                  className={`flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                    config?.direction === 'right'
+                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  Правый
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-sm text-gray-600 mb-1 block">Толщина ступени (мм)</Label>
+              <input
+                type="number"
+                value={config?.stepThickness ?? 40}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  if (val > 0) updateConfig.setStepThickness(val);
                 }}
                 className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-lg font-medium focus:border-blue-500 focus:outline-none"
               />
@@ -147,6 +250,55 @@ export function ControlPanel() {
 
         <Card>
           <CardHeader>
+            <CardTitle className="text-base">Косоур</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm text-gray-600 mb-2 block">Материал косоура</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: "oak", name: "Дуб", color: "#D2691E" },
+                    { id: "beech", name: "Бук", color: "#CD853F" },
+                    { id: "ash", name: "Ясень", color: "#DEB887" },
+                    { id: "pine", name: "Сосна", color: "#F4A460" },
+                    { id: "metal", name: "Металл", color: "#708090" },
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => updateConfig.setStringerMaterial(m.id)}
+                      className={`group relative rounded-lg overflow-hidden border-2 transition-all ${
+                        config?.stringerMaterial === m.id
+                          ? "border-blue-600"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="h-12 w-full" style={{ backgroundColor: m.color }} />
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs py-0.5 text-center">
+                        {m.name}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600 mb-1 block">Толщина (мм)</Label>
+                <input
+                  type="number"
+                  value={config?.stringerThickness ?? 50}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (val > 0) updateConfig.setStringerThickness(val);
+                  }}
+                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-lg font-medium focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle className="text-base">Покрытие</CardTitle>
           </CardHeader>
           <CardContent>
@@ -188,8 +340,12 @@ export function ControlPanel() {
 
         <div className="text-sm text-gray-500 space-y-1">
           <div className="flex justify-between">
-            <span>Материал:</span>
+            <span>Материал ступеней:</span>
             <span>{(calculatedResult?.materialCost || 0).toLocaleString("ru-RU")} ₽</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Косоур:</span>
+            <span>—</span>
           </div>
           <div className="flex justify-between">
             <span>Работа:</span>

@@ -30,8 +30,8 @@ describe('useConfiguratorStore', () => {
   })
 
   it('should set type', () => {
-    useConfiguratorStore.getState().setType('L-shaped')
-    expect(useConfiguratorStore.getState().type).toBe('L-shaped')
+    useConfiguratorStore.getState().setType('l-shaped')
+    expect(useConfiguratorStore.getState().type).toBe('l-shaped')
   })
 
   it('should set floorHeight', () => {
@@ -70,7 +70,7 @@ describe('useConfiguratorStore', () => {
   })
 
   it('should reset to initial values', () => {
-    useConfiguratorStore.getState().setType('U-shaped')
+    useConfiguratorStore.getState().setType('u-shaped')
     useConfiguratorStore.getState().setFloorHeight(3500)
     useConfiguratorStore.getState().setMaterial('beech')
 

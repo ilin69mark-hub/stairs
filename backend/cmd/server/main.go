@@ -12,11 +12,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/hibiken/asynq"
 
 	"github.com/yourorg/stairs-backend/internal/api"
 	"github.com/yourorg/stairs-backend/internal/config"
 	"github.com/yourorg/stairs-backend/internal/storage"
+	"github.com/yourorg/stairs-backend/internal/tasks"
 )
 
 func main() {
@@ -36,13 +36,15 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	minioClient, err := storage.NewMinio(cfg.MinioEndpoint, cfg.MinioAccessKey, cfg.MinioSecretKey)
+	minioClient, err := storage.NewMinio(cfg.MinioEndpoint, cfg.MinioAccessKey, cfg.MinioSecretKey, cfg.MinioBucket, cfg.MinioSecure)
 	if err != nil {
 		log.Printf("Warning: failed to connect to minio: %v. Continuing without minio.", err)
 		minioClient = nil
 	}
 
-	asynqClient := asynq.NewClient(asynq.RedisClientOpt{Addr: cfg.RedisURL})
+	asynqClient := tasks.NewAsynqClient(cfg.RedisURL)
+	asynqServer := tasks.NewAsynqServer(cfg.RedisURL, pool, minioClient, cfg.MinioPublicURL)
+	defer asynqServer.Stop()
 
 	deps := &api.Deps{
 		Pool:   pool,

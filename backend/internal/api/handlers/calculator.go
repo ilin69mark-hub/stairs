@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
@@ -15,7 +14,7 @@ type CalculatorHandler struct {
 	calc *calculator.CalculationService
 }
 
-func NewCalculatorHandler(calc *calculator.CalculationService, redisClient interface{}) *CalculatorHandler {
+func NewCalculatorHandler(calc *calculator.CalculationService) *CalculatorHandler {
 	return &CalculatorHandler{
 		calc: calc,
 	}
@@ -35,8 +34,7 @@ func (h *CalculatorHandler) CalculatePrecise(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	ctx := context.Background()
-	result, err := h.calc.Calculate(ctx, config)
+	result, err := h.calc.Calculate(r.Context(), config)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

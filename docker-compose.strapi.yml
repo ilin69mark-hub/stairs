@@ -14,9 +14,9 @@ services:
       DATABASE_PORT: 5432
       DATABASE_NAME: strapi
       DATABASE_USERNAME: stairs
-      DATABASE_PASSWORD: secret
-      JWT_SECRET: strapi-jwt-secret-key-change-in-production
-      ADMIN_JWT_SECRET: strapi-admin-jwt-secret-key-change-in-production
+      DATABASE_PASSWORD: ${STRAPI_DB_PASSWORD:-secret}
+      JWT_SECRET: ${STRAPI_JWT_SECRET:-change-me-in-production}
+      ADMIN_JWT_SECRET: ${STRAPI_ADMIN_JWT_SECRET:-change-me-in-production}
       NODE_ENV: development
     volumes:
       - strapi_data:/srv/app
@@ -33,7 +33,7 @@ services:
     environment:
       POSTGRES_DB: strapi
       POSTGRES_USER: stairs
-      POSTGRES_PASSWORD: secret
+      POSTGRES_PASSWORD: ${STRAPI_DB_PASSWORD:-secret}
     volumes:
       - postgres_strapi_data:/var/lib/postgresql/data
     healthcheck:

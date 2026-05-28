@@ -19,9 +19,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@stairs/geometry": ["../packages/stair-geometry/src"],
-      "@stairs/geometry/*": ["../packages/stair-geometry/src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": [
